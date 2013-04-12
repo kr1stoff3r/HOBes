@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project basedir="." default="build" name="hobes">
+	<property environment="env" />
+	<property name="debuglevel" value="source,lines,vars" />
+	<property name="target" value="1.6" />
+	<property name="source" value="1.6" />
+	
+	<path id="hobes.classpath">
+		<pathelement location="bin" />
+	</path>
+
+	<target name="prepare">
+		<mkdir dir="bin" />
+		<mkdir dir="tmp" />
+		<mkdir dir="doc/api" />
+		<mkdir dir="dist" />
+	</target>
+	
+	<target name="clean-bin">
+		<delete dir="bin" includes="**/*"  />
+	</target>
+	<target name="clean-tmp">
+		<delete dir="tmp" includes="**/*"  />
+	</target>
+	<target name="clean-api">
+		<delete dir="doc/api" includes="**/*"  />
+	</target>
+	<target name="clean-dist">
+		<delete dir="dist" includes="**/*"  />
+	</target>
+	
+	<target name="clean" depends="clean-bin,clean-tmp"/>
+	<target name="cleanall" depends="clean,clean-api,clean-dist"/>
+	
+	<target name="compile">
+		<javac debug="false"
+			destdir="bin" 
+			source="${source}" target="${target}" 
+			includeantruntime="false">
+			<src path="src"/>
+			<classpath refid="hobes.classpath" />
+		</javac>
+	</target>
+	
+	<target name="compile-debug">
+		<javac debug="true" debuglevel="${debuglevel}" 
+			destdir="bin" 
+			source="${source}" target="${target}" 
+			includeantruntime="false">
+			<src path="src" />
+			<src path="src-test" />
+			<classpath refid="hobes.classpath" />
+		</javac>
+	</target>
+	
+	<target name="init-build">
+		<copy includeemptydirs="false" todir="bin">
+			<fileset dir="src">
+				<include name="**/*.des"/>
+				<include name="**/*.dhp"/>
+				<include name="**/*.properties"/>
+			</fileset>
+		</copy>
+	</target>
+	<target name="build" depends="init-build,compile"/>
+	
+	<target name="build-test" depends="init-build,compile-debug"/>
+	
+	<target name="dist" depends="clean,build">
+		<jar basedir="bin" destfile="dist/${ant.project.name}.jar">
+			<manifest>
+				<attribute name="Implementation-Title" value="HOBes"/>
+				<attribute name="Implementation-Vendor" value="marl"/>
+				<attribute name="Implementation-Version" value="1.0"/>
+			</manifest>
+		</jar>
+	</target>
+	
+	<target name="dist-test" depends="clean,build-test">
+		<jar basedir="bin" destfile="dist/${ant.project.name}-test.jar">
+			<manifest>
+				<attribute name="Implementation-Title" value="HOBes"/>
+				<attribute name="Implementation-Vendor" value="marl"/>
+				<attribute name="Implementation-Version" value="1.0 (debug/test)"/>
+			</manifest>
+		</jar>
+	</target>
+	
+	<target name="init-api">
+		<copy includeemptydirs="false" todir="doc/api">
+			<fileset dir="src">
+				<include name="**/*.txt" />
+			</fileset>
+		</copy>
+	</target>
+	<target name="api" depends="init-api">
+		<javadoc sourcepath="src" destdir="doc/api" 
+			nonavbar="false">
+			<link href="http://docs.oracle.com/javase/6/docs/api/" />
+		</javadoc>
+	</target>
+
+</project>

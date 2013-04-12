@@ -55,7 +55,6 @@ public abstract class DesObjectBus {
 	 * Ciphers an object using DES-encryption.
 	 * 
 	 * @param pData A serializable object.
-	 * @param pType The serialization type, which can differ from the runtime type.
 	 * @param pSharedSecret The symmetric key to use.
 	 * 
 	 * @return A sealed object containing the ciphered data.
@@ -63,14 +62,13 @@ public abstract class DesObjectBus {
 	 * @throws HobesSecurityException When a cryptography error occurs.
 	 * @throws HobesTransportException When an I/O error occurs.
 	 */
-	public static SealedObject cipher(Serializable pData, 
-			Class<? extends Serializable> pType,
-			SecretKey pSharedSecret) throws HobesSecurityException, HobesTransportException{
+	public static SealedObject cipher(Object pData,	SecretKey pSharedSecret)
+			throws HobesSecurityException, HobesTransportException{
 		
 		try {
 			Cipher cipher = Cipher.getInstance(SecretFactory.ENCRYPTION_ALGORITHM);
 			cipher.init(Cipher.ENCRYPT_MODE, pSharedSecret);
-			return new SealedObject(pType.cast(pData), cipher);
+			return new SealedObject((Serializable) pData, cipher);
 		} 
 		catch (NoSuchAlgorithmException e) {
 			throw new HobesSecurityException(e);
@@ -137,19 +135,17 @@ public abstract class DesObjectBus {
 	 * 
 	 * @param pOutStream An open stream to write to. This stream should not be re-open.
 	 * @param pData A serializable object.
-	 * @param pType The serialization type, which can differ from the runtime type.
 	 * @param pSharedSecret The symmetric key to use.
 	 * 
 	 * @throws HobesTransportException When the stream is corrupted.
 	 * @throws HobesSecurityException When a cryptography error occurs.
 	 */
 	public static void write(OutputStream pOutStream, 
-			Serializable pData,
-			Class<? extends Serializable> pType,
+			Object pData,
 			SecretKey pSharedSecret)
 					throws HobesTransportException, HobesSecurityException {
 		
-			ObjectBus.write(pOutStream, cipher(pData, pType, pSharedSecret), SealedObject.class);
+			ObjectBus.write(pOutStream, cipher(pData, pSharedSecret));
 	}
 
 	/** 
@@ -157,21 +153,19 @@ public abstract class DesObjectBus {
 	 * 
 	 * @param pPath The serialization file path.
 	 * @param pData A serializable object.
-	 * @param pType The serialization type, which can differ from the runtime type.
 	 * @param pSharedSecret The symmetric key to use.
 	 * 
 	 * @throws HobesTransportException When an I/O error occurs.
 	 * @throws HobesSecurityException When a cryptography error occurs.
 	 */
 	public static void write(String pPath,
-			Serializable pData,
-			Class<? extends Serializable> pType,
+			Object pData,
 			SecretKey pSharedSecret)
 					throws HobesTransportException, HobesSecurityException {
 		
 		try{
 			FileOutputStream fos = new FileOutputStream(pPath);
-			write(fos, pData, pType, pSharedSecret);
+			write(fos, pData, pSharedSecret);
 			fos.close();
 		}
 		catch (FileNotFoundException e) {
@@ -189,7 +183,6 @@ public abstract class DesObjectBus {
 	 * @param pSourceId The source identifier.
 	 * @param pOutStream An open stream to write to. This stream should not be re-open.
 	 * @param pData A serializable object.
-	 * @param pType The serialization type, which can differ from the runtime type.
 	 * @param pSharedSecret The symmetric key to use.
 	 * 
 	 * @throws HobesTransportException When the stream is corrupted.
@@ -197,14 +190,13 @@ public abstract class DesObjectBus {
 	 */
 	public static void writeWithSource(String pSourceId,
 			OutputStream pOutStream, 
-			Serializable pData,
-			Class<? extends Serializable> pType,
+			Object pData,
 			SecretKey pSharedSecret) throws HobesTransportException, HobesSecurityException {
 		
 		try{
 			ObjectOutputStream oos = new ObjectOutputStream(pOutStream);
 			oos.writeObject(pSourceId);
-			oos.writeObject(cipher(pData, pType, pSharedSecret));
+			oos.writeObject(cipher(pData, pSharedSecret));
 			oos.close();
 		}
 		catch (IOException e) {
@@ -219,7 +211,6 @@ public abstract class DesObjectBus {
 	 * @param pSourceId The source identifier.
 	 * @param pPath The serialization file path.
 	 * @param pData A serializable object.
-	 * @param pType The serialization type, which can differ from the runtime type.
 	 * @param pSharedSecret The symmetric key to use.
 	 * 
 	 * @throws HobesTransportException When the stream is corrupted.
@@ -227,14 +218,13 @@ public abstract class DesObjectBus {
 	 */
 	public static void writeWithSource(String pSourceId,
 			String pPath, 
-			Serializable pData,
-			Class<? extends Serializable> pType,
+			Object pData,
 			SecretKey pSharedSecret) 
 					throws HobesTransportException, HobesSecurityException {
 		
 		try {
 			FileOutputStream fos = new FileOutputStream(pPath);
-			writeWithSource(pSourceId, fos, pData, pType, pSharedSecret);
+			writeWithSource(pSourceId, fos, pData, pSharedSecret);
 			fos.close();
 		}
 		catch (FileNotFoundException e) {

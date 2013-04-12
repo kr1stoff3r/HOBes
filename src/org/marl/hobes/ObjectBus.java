@@ -25,10 +25,9 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
-import java.io.Serializable;
 
 /** 
- * Implements function calls to read and write Java objects, easily and consistently,
+ * Implements function calls to (de)serialize Java objects, easily and consistently,
  *  to/from streams and files.
  * 
  * @author chris
@@ -41,17 +40,15 @@ public abstract class ObjectBus {
 	 * 
 	 * @param pOutStream An open stream to write to. This stream should not be re-open.
 	 * @param pData A serializable object.
-	 * @param pType The serialization type, which can differ from the runtime type.
 	 * 
-	 * @throws HobesTransportException When the stream is corrupted.
+	 * @throws HobesTransportException When an I/O error occurs.
 	 */
-	public static void write(OutputStream pOutStream, 
-			Serializable pData,
-			Class<? extends Serializable> pType) throws HobesTransportException {
+	public static void write(OutputStream pOutStream, Object pData) 
+			throws HobesTransportException {
 		
 		try {
 			ObjectOutputStream oos = new ObjectOutputStream(pOutStream);
-			oos.writeObject(pType.cast(pData));
+			oos.writeObject(pData);
 			oos.close();
 		}
 		catch (IOException e) {
@@ -64,17 +61,15 @@ public abstract class ObjectBus {
 	 *  
 	 * @param pPath The destination file path.
 	 * @param pData A serializable object.
-	 * @param pType The serialization type, which can differ from the runtime type.
 	 * 
 	 * @throws HobesTransportException When an I/O error occurs.
 	 */
-	public static void write(String pPath, 
-			Serializable pData,
-			Class<? extends Serializable> pType) throws HobesTransportException {
+	public static void write(String pPath, Object pData)
+			throws HobesTransportException {
 	
 		try {
 			FileOutputStream fos = new FileOutputStream(pPath);
-			write(fos, pData, pType);
+			write(fos, pData);
 			fos.close();
 		}
 		catch (FileNotFoundException e) {
@@ -92,18 +87,15 @@ public abstract class ObjectBus {
 	 * @param pSourceId The source identifier.
 	 * @param pOutStream An open stream to write to. This stream should not be re-open.
 	 * @param pData A serializable object.
-	 * @param pType The serialization type, which can differ from the runtime type.
 	 * 
-	 * @throws HobesTransportException When the stream is corrupted.
+	 * @throws HobesTransportException When an I/O error occurs.
 	 */
-	public static void writeWithSource(String pSourceId,
-			OutputStream pOutStream, 
-			Serializable pData,
-			Class<? extends Serializable> pType) throws HobesTransportException {
+	public static void writeWithSource(String pSourceId, OutputStream pOutStream, Object pData)
+			throws HobesTransportException {
 		try {
 			ObjectOutputStream oos = new ObjectOutputStream(pOutStream);
 			oos.writeObject(pSourceId);
-			oos.writeObject(pType.cast(pData));
+			oos.writeObject(pData);
 			oos.close();
 		}
 		catch (IOException e) {
@@ -119,17 +111,16 @@ public abstract class ObjectBus {
 	 * @param pPath The destination file path.
 	 * @param pOutStream An open stream to write to. This stream should not be re-open.
 	 * @param pData A serializable object.
-	 * @param pType The serialization type, which can differ from the runtime type.
 	 * 
 	 * @throws HobesTransportException When an I/O error occurs.
 	 */
 	public static void writeWithSource(String pSourceId,
 			String pPath,
-			Serializable pData,
-			Class<? extends Serializable> pType) throws HobesTransportException {
+			Object pData)
+					throws HobesTransportException {
 		try {
 			FileOutputStream fos = new FileOutputStream(pPath);
-			writeWithSource(pSourceId, fos, pData, pType);
+			writeWithSource(pSourceId, fos, pData);
 			fos.close();
 		}
 		catch (FileNotFoundException e) {
@@ -171,7 +162,6 @@ public abstract class ObjectBus {
 	 * Deserializes an object from a file.
 	 * 
 	 * @param pPath Path to a file created using the {@link write} API.
-	 * @param pType The deserialization type, that should correspond to the serialization type.
 	 * 
 	 * @return The deserialized object. Its type should correspond to the serialization type.
 	 * 

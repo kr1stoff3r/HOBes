@@ -19,7 +19,6 @@ package org.marl.hobes.test;
 
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
-import java.io.Serializable;
 
 import org.marl.hobes.ObjectBus;
 import org.marl.hobes.SourcedObject;
@@ -47,7 +46,6 @@ public class ObjectBusTest {
 		PipedInputStream pis; 
 		PipedOutputStream pos;
 		TestObjectType etalonData = TestPreferences.getTestObject();
-		Class<? extends Serializable> etalonType = TestObjectType.class;
 		Object echoData;
 		SourcedObject sourcedObj;
 		
@@ -59,8 +57,9 @@ public class ObjectBusTest {
 			System.out.println("... Testing raw de/serialization on in-memory stream");
 			pis = new PipedInputStream();
 			pos = new PipedOutputStream(pis);
-			ObjectBus.write(pos, etalonData, etalonType);
-			echoData = etalonType.cast(ObjectBus.read(pis));
+			ObjectBus.write(pos, etalonData);
+			echoData = (TestObjectType) ObjectBus.read(pis);
+			assert(echoData.getClass().equals(TestObjectType.class));
 			assert (etalonData.equals(echoData));
 			System.out.println("<-- Object seems to had a nice read/write");
 			System.out.println();
@@ -70,8 +69,9 @@ public class ObjectBusTest {
 			// Testing raw de/serialization on file
 			//
 			System.out.println("... Testing raw de/serialization on file");
-			ObjectBus.write(szPath, etalonData, etalonType);
-			echoData = etalonType.cast(ObjectBus.read(szPath));
+			ObjectBus.write(szPath, etalonData);
+			echoData = (TestObjectType) ObjectBus.read(szPath);
+			assert(echoData.getClass().equals(TestObjectType.class));
 			assert (etalonData.equals(echoData));
 			System.out.println("<-- Object seems to had a nice read/write");
 			System.out.println();
@@ -83,9 +83,10 @@ public class ObjectBusTest {
 			System.out.println("... Testing sourced de/serialization on in-memory stream");
 			pis = new PipedInputStream();
 			pos = new PipedOutputStream(pis);
-			ObjectBus.writeWithSource(SourcedObject.GUEST_ID, pos, etalonData, etalonType);
+			ObjectBus.writeWithSource(SourcedObject.GUEST_ID, pos, etalonData);
 			sourcedObj = SourcedObject.class.cast(ObjectBus.readWithSource(pis));
 			echoData = sourcedObj.getPayload();
+			assert(echoData.getClass().equals(TestObjectType.class));
 			assert (etalonData.equals(echoData));
 			System.out.println("<-- Object seems to had a nice read/write");
 			System.out.println();
@@ -95,9 +96,10 @@ public class ObjectBusTest {
 			// Testing sourced de/serialization on file
 			//
 			System.out.println("... Testing sourced de/serialization on file");
-			ObjectBus.writeWithSource(SourcedObject.GUEST_ID, sszPath, etalonData, etalonType);
+			ObjectBus.writeWithSource(SourcedObject.GUEST_ID, sszPath, etalonData);
 			sourcedObj = SourcedObject.class.cast(ObjectBus.readWithSource(sszPath));
 			echoData = sourcedObj.getPayload();
+			assert(echoData.getClass().equals(TestObjectType.class));
 			assert (etalonData.equals(echoData));
 			System.out.println("<-- Object seems to had a nice read/write");
 			System.out.println();

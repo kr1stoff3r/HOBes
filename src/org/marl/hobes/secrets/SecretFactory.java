@@ -84,7 +84,7 @@ public class SecretFactory {
 	 */
 	public static void writeDhSpec(OutputStream pOutStream, DHParameterSpec pDhspec) 
 			throws HobesTransportException{
-		ObjectBus.write(pOutStream, new SerializableDhSpec(pDhspec), SerializableDhSpec.class);
+		ObjectBus.write(pOutStream, new SerializableDhSpec(pDhspec));
 	}
 	
 	/** 
@@ -117,7 +117,7 @@ public class SecretFactory {
 	 */
 	public static DHParameterSpec createDhSpecFile(String pPath) throws HobesSecurityException, HobesTransportException {
 		DHParameterSpec dhspec = createDhSpec();
-		ObjectBus.write(pPath, new SerializableDhSpec(dhspec), SerializableDhSpec.class);
+		ObjectBus.write(pPath, new SerializableDhSpec(dhspec));
 		return dhspec;
 	}
 
@@ -165,7 +165,7 @@ public class SecretFactory {
 	 */
 	public static void writeSecret(OutputStream pOutStream, SecretKey pSecret) 
 			throws HobesTransportException, HobesSecurityException{
-		ObjectBus.write(pOutStream, pSecret.getEncoded(), byte[].class);
+		ObjectBus.write(pOutStream, pSecret.getEncoded());
 	}
 	
 	/** 

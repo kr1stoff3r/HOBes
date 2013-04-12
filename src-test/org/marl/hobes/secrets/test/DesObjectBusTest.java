@@ -19,7 +19,6 @@ package org.marl.hobes.secrets.test;
 
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
-import java.io.Serializable;
 
 import javax.crypto.SealedObject;
 
@@ -52,7 +51,6 @@ public class DesObjectBusTest {
 		PipedInputStream pis; 
 		PipedOutputStream pos;
 		TestObjectType etalonData = TestPreferences.getTestObject();
-		Class<? extends Serializable> etalonType = TestObjectType.class;
 		Object echoData;
 		SourcedObject sourcedObj;
 		
@@ -64,8 +62,10 @@ public class DesObjectBusTest {
 			System.out.println("... Testing raw de/serialization on DES encrypted in-memory stream");
 			pis = new PipedInputStream();
 			pos = new PipedOutputStream(pis);
-			DesObjectBus.write(pos, etalonData, etalonType, SecretManager.getDefaultSecret());
-			echoData = etalonType.cast(DesObjectBus.read(pis, SecretManager.getDefaultSecret()));
+			DesObjectBus.write(pos, etalonData, SecretManager.getDefaultSecret());
+			echoData = (TestObjectType) DesObjectBus.read(pis, SecretManager.getDefaultSecret());
+			assert (echoData.getClass().equals(TestObjectType.class));
+			assert (etalonData.equals(echoData));
 			System.out.println("<-- Object seems to had a nice private read/write");
 			System.out.println();
 		
@@ -74,8 +74,9 @@ public class DesObjectBusTest {
 			// Testing raw de/serialization on DES encrypted file
 			//
 			System.out.println("... Testing raw de/serialization on DES encrypted file");
-			DesObjectBus.write(szPath, etalonData, etalonType, SecretManager.getDefaultSecret());
-			echoData = etalonType.cast(DesObjectBus.read(szPath, SecretManager.getDefaultSecret()));
+			DesObjectBus.write(szPath, etalonData, SecretManager.getDefaultSecret());
+			echoData = (TestObjectType) DesObjectBus.read(szPath, SecretManager.getDefaultSecret());
+			assert (echoData.getClass().equals(TestObjectType.class));
 			assert (etalonData.equals(echoData));
 			System.out.println("<-- Object seems to had a nice private read/write");
 			System.out.println();
@@ -90,11 +91,11 @@ public class DesObjectBusTest {
 			DesObjectBus.writeWithSource(SourcedObject.GUEST_ID,
 					pos, 
 					etalonData,
-					etalonType,
 					SecretManager.getDefaultSecret());
 			sourcedObj = DesObjectBus.readWithSource(pis);
 			echoData = DesObjectBus.decipher( (SealedObject) sourcedObj.getPayload(), 
 					SecretManager.getDefaultSecret());
+			assert (echoData.getClass().equals(TestObjectType.class));
 			assert (etalonData.equals(echoData));
 			System.out.println("<-- Object seems to had a nice private read/write");
 			System.out.println();
@@ -109,10 +110,10 @@ public class DesObjectBusTest {
 			DesObjectBus.writeWithSource(SourcedObject.GUEST_ID,
 					pos, 
 					etalonData,
-					etalonType,
 					SecretManager.getDefaultSecret());
 			sourcedObj = DesObjectBus.readWithSource(pis, SecretManager.getDefaultSecret());
 			echoData = sourcedObj.getPayload();
+			assert (echoData.getClass().equals(TestObjectType.class));
 			assert (etalonData.equals(echoData));
 			System.out.println("<-- Object seems to had a nice private read/write");
 			System.out.println();
@@ -125,10 +126,10 @@ public class DesObjectBusTest {
 			DesObjectBus.writeWithSource(SourcedObject.GUEST_ID,
 					sszPath, 
 					etalonData,
-					etalonType,
 					SecretManager.getDefaultSecret());
 			sourcedObj = DesObjectBus.readWithSource(sszPath);
 			echoData = DesObjectBus.decipher((SealedObject) sourcedObj.getPayload(), SecretManager.getDefaultSecret());
+			assert (echoData.getClass().equals(TestObjectType.class));
 			assert (etalonData.equals(echoData));
 			System.out.println("<-- Object seems to had a nice private read/write");
 			System.out.println();
@@ -141,10 +142,10 @@ public class DesObjectBusTest {
 			DesObjectBus.writeWithSource(SourcedObject.GUEST_ID,
 					sszPath, 
 					etalonData,
-					etalonType,
 					SecretManager.getDefaultSecret());
 			sourcedObj = DesObjectBus.readWithSource(sszPath, SecretManager.getDefaultSecret());
 			echoData = sourcedObj.getPayload();
+			assert (echoData.getClass().equals(TestObjectType.class));
 			assert (etalonData.equals(echoData));
 			System.out.println("<-- Object seems to had a nice private read/write");
 			System.out.println();

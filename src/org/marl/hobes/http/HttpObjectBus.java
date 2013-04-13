@@ -145,4 +145,44 @@ public class HttpObjectBus {
 			throw new HobesTransportException(e);
 		}
 	}
+
+	/**
+	 * @param pSourceId
+	 * @param pUrl
+	 * @param pData
+	 * @param pTcpTimeout
+	 * @param pHttpTimeout
+	 * @param pUseResponseFlag
+	 * @return
+	 * @throws HobesException
+	 */
+	public static Object postWithSource(String pSourceId,
+			URL pUrl,
+			Object pData, 
+			int pTcpTimeout,
+			int pHttpTimeout,
+			boolean pUseResponseFlag) throws HobesException {
+
+		try {
+			HttpURLConnection connection = (HttpURLConnection) pUrl.openConnection();
+			connection.setConnectTimeout(pTcpTimeout);
+			connection.setReadTimeout(pHttpTimeout);
+			connection.setRequestMethod("POST");
+			connection.setDoOutput(true);
+			connection.setDoInput(pUseResponseFlag);
+			connection.connect();
+			
+			ObjectBus.writeWithSource(pSourceId, connection.getOutputStream(), pData) ;
+			if (pUseResponseFlag) {
+				return ObjectBus.read(connection.getInputStream());
+			}
+			else {
+				return null;
+			}
+		}
+		catch (IOException e) {
+			throw new HobesTransportException(e);
+		}
+		
+	}
 }

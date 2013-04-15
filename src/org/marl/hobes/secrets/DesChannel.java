@@ -20,6 +20,7 @@ package org.marl.hobes.secrets;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import javax.crypto.SealedObject;
 import javax.crypto.SecretKey;
 
 import org.marl.hobes.HobesDataException;
@@ -65,7 +66,7 @@ public class DesChannel {
 	 * @return The shared secret used on this channel.
 	 * @throws HobesSecurityException When the secret has not been set.
 	 */
-	public SecretKey getSharedSecret() throws HobesSecurityException{
+	public SecretKey getSecretKey() throws HobesSecurityException{
 		if (this.sharedSecret == null){
 			throw new HobesSecurityException();
 		}
@@ -86,7 +87,7 @@ public class DesChannel {
 	 */
 	public void write(OutputStream pOutStream, Object pData) 
 			throws HobesTransportException, HobesSecurityException{
-		DesObjectBus.write(pOutStream, pData, getSharedSecret());
+		DesObjectBus.write(pOutStream, pData, getSecretKey());
 	}
 
 	/** 
@@ -102,7 +103,7 @@ public class DesChannel {
 	 */
 	public void writeWithSource(String pSourceId, OutputStream pOutStream, Object pData)
 			throws HobesTransportException, HobesSecurityException{
-		DesObjectBus.writeWithSource(pSourceId, pOutStream, pData, getSharedSecret());
+		DesObjectBus.writeWithSource(pSourceId, pOutStream, pData, getSecretKey());
 	}
 	
 	/** 
@@ -120,7 +121,7 @@ public class DesChannel {
 	 */
 	public Object read(InputStream pInStream) 
 			throws HobesTransportException, HobesDataException, HobesSecurityException{
-		return DesObjectBus.read(pInStream, getSharedSecret());
+		return DesObjectBus.read(pInStream, getSecretKey());
 	}
 
 	/** 
@@ -138,6 +139,15 @@ public class DesChannel {
 	 */
 	public SourcedObject readWithSource(InputStream pInStream) 
 			throws HobesTransportException, HobesDataException, HobesSecurityException{
-		return DesObjectBus.readWithSource(pInStream, getSharedSecret());
+		return DesObjectBus.readWithSource(pInStream, getSecretKey());
 	}
+	
+	public Object decipher(Object pData) throws HobesSecurityException, HobesTransportException, HobesDataException {
+		return DesObjectBus.decipher((SealedObject) pData,getSecretKey());
+	}
+			
+	public SealedObject cipher(Object pData) throws HobesSecurityException, HobesTransportException{
+		return DesObjectBus.cipher(pData, getSecretKey());
+	}
+
 }

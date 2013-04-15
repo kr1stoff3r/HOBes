@@ -22,9 +22,9 @@ public class CreateSecretFileTool {
 		
 		try {
 			System.out.println("... Writting DES key to: "+keyFilepath);
-			SecretFactory.createSecretFile(keyFilepath);
+			SecretFactory.createSecretKeyFile(keyFilepath);
 			System.out.println("... Verifying file");
-			SecretFactory.createSecret(keyFilepath);
+			SecretFactory.createSecretKey(keyFilepath);
 			System.out.println("--done.");
 		}
 		catch (HobesException e) {

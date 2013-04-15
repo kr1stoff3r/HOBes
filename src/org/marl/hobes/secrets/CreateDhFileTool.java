@@ -20,9 +20,9 @@ public class CreateDhFileTool {
 		
 		try {
 			System.out.println("... Writting Diffie-Hellman parameters to: "+sdhFilepath);
-			SecretFactory.createDhSpecFile(sdhFilepath);
+			SecretFactory.createDhParamsFile(sdhFilepath);
 			System.out.println("... Verifying file");
-			SecretFactory.createDhSpec(sdhFilepath);
+			SecretFactory.createDhParams(sdhFilepath);
 			System.out.println("--done.");
 		}
 		catch (HobesException e) {

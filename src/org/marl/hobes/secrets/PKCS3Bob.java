@@ -1,71 +1,55 @@
 package org.marl.hobes.secrets;
 
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 
-import javax.crypto.interfaces.DHPublicKey;
+import javax.crypto.KeyAgreement;
+import javax.crypto.interfaces.DHPrivateKey;
 
 import org.marl.hobes.HobesDataException;
+import org.marl.hobes.HobesException;
 import org.marl.hobes.HobesSecurityException;
 import org.marl.hobes.HobesTransportException;
-import org.marl.hobes.ObjectBus;
-import org.marl.hobes.SourcedObject;
 
 public class PKCS3Bob extends PKCS3Actor {
 
+	protected DHPrivateKey privateValue;
+	
 	/**
 	 * @param id
 	 * @param alicePublicKey
-	 */
-	protected PKCS3Bob(String id, DHPublicKey alicePublicKey) {
-		super(id);
-		this.peerEncodedPublicKey = alicePublicKey.getEncoded();
-	}
-	
-	/** 
-	 * Initiates a Diffie-Hellman key agreement protocol, based on Alice
-	 * public key and DH parameters.
-	 * 
-	 * <p>Bob does its phase I of the protocol.
-	 * 
-	 * @param pInStream The stream to deserialize Alice byte-encoded public key from.
-	 * 
-	 * @return The corresponding Bob actor, in state <code>STATE_PHASE_I</code>.
-	 * 
-	 * @throws HobesTransportException When an I/O error occurs.
-	 * @throws HobesDataException When a marshaling error occurs.
-	 * @throws HobesSecurityException When a cryptography error occurs.
-	 */
-	public static PKCS3Bob initiateDhAgreementProtocol(InputStream pInStream) 
-			throws HobesTransportException, HobesDataException, HobesSecurityException{
-		
-		SourcedObject dhHandshake = ObjectBus.readWithSource(pInStream);
-		
-		DHPublicKey alicePublicKey = createPublicKey((byte[]) dhHandshake.getPayload()); 
-		
-		PKCS3Bob bob = new PKCS3Bob(dhHandshake.getSource(), alicePublicKey);
-		bob.protocolPhaseI(alicePublicKey.getParams());
-		
-		return bob;
-	}
-
-	/**
-	 * Bob completes the Diffie-Hellman key agreement protocol by
-	 * sending its public key to Alice, and proceeding to
-	 * phase II of the Diffie-Hellman protocol.
-	 * <p>After this phase, this actor should find itself in state 
-	 * <code>STATE_PHASE_II</code> and be able to communicate over
-	 * the established DES channel.
-	 * 
-	 * @param pOutStream The stream to serialize this actor public key to.
-	 * @throws HobesSecurityException When a cryptography error occurs.
+	 * @throws HobesSecurityException 
+	 * @throws HobesDataException 
 	 * @throws HobesTransportException 
 	 */
-	public void completeDhAgreementProtocol(OutputStream pOutStream) 
-			throws HobesTransportException, HobesSecurityException{
-		ObjectBus.write(pOutStream, getPublicKey());
-		
-		protocolPhaseII(this.peerEncodedPublicKey);
+	public PKCS3Bob(String id) 
+			throws HobesTransportException, HobesDataException, HobesSecurityException {
+		super(id);
+		this.publicValue = SecretManager.getTrustedPublicValue();
+		this.privateValue = SecretManager.getTrustedPrivateValue();
 	}
 	
+	/**
+	 * @param pPublicKey
+	 * @param pPrivateKey
+	 * @throws HobesException 
+	 * @throws InvalidAlgorithmParameterException 
+	 */
+	public void protocolPhaseI()
+			throws HobesException{
+		try{
+			this.dhProtocolAgreement = KeyAgreement.getInstance(SecretFactory.KEY_AGREEMENT_ALGORITHM);
+			this.dhProtocolAgreement.init(this.privateValue);
+			
+			this.state = STATE_PHASE_I;
+		} 
+		catch (NoSuchAlgorithmException e) {
+			throw new HobesSecurityException(e);
+		}
+		catch (InvalidKeyException e) {
+			throw new HobesSecurityException(e);
+		} 
+	}
+
 }

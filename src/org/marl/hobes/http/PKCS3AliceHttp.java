@@ -17,19 +17,9 @@ along with HOBes.  If not, see <http://www.gnu.org/licenses/>.
 */
 package org.marl.hobes.http;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
 import java.net.URL;
 
-import javax.crypto.spec.DHParameterSpec;
-
-import org.marl.hobes.HobesDataException;
 import org.marl.hobes.HobesException;
-import org.marl.hobes.HobesSecurityException;
-import org.marl.hobes.HobesTransportException;
-import org.marl.hobes.secrets.DesObjectBus;
 import org.marl.hobes.secrets.PKCS3Alice;
 
 /**
@@ -39,74 +29,70 @@ import org.marl.hobes.secrets.PKCS3Alice;
  */
 public class PKCS3AliceHttp extends PKCS3Alice {
 
-	protected URL bobURL;
+	protected URL trustedPkcs3URL;
 	protected int tcpTimeout;
 	protected int httpTimeout;
 	
+	/**
+	 * @param id
+	 * @param pTrustedPkcs3Url
+	 * @param pTcpTimeout
+	 * @param pHttpTimeout
+	 * @throws HobesException
+	 */
 	public PKCS3AliceHttp(String id,
-			URL pPKCS3EndpointUrl,
+			URL pTrustedPkcs3Url,
 			int pTcpTimeout,
-			int pHttpTimeout) {
+			int pHttpTimeout) throws HobesException {
 		super(id);
-		this.bobURL = pPKCS3EndpointUrl;
+		this.trustedPkcs3URL = pTrustedPkcs3Url;
 		this.tcpTimeout = pTcpTimeout;
 		this.httpTimeout = pHttpTimeout;
 	}
 
 	/**
-	 * @param pInStream
-	 * @param pOutputStream
-	 * @throws HobesException 
+	 * @param id
+	 * @param pTrustedPkcs3Url
+	 * @throws HobesException
 	 */
-	public void doDiffieHellmanKeyAgreement(DHParameterSpec pDhParams,
-			InputStream pInStream, 
-			OutputStream pOutputStream) 
+	public PKCS3AliceHttp(String id, URL pTrustedPkcs3Url) throws HobesException {
+		super(id);
+		this.trustedPkcs3URL = pTrustedPkcs3Url;
+		this.tcpTimeout = HttpObjectBus.DEFAULT_TCP_TIMEOUT;
+		this.httpTimeout = HttpObjectBus.DEFAULT_HTTP_TIMEOUT;
+	}
+	
+	/**
+	 * @throws HobesException
+	 */
+	public void completeDiffieHellmanProtocol() 
 					throws HobesException{
-		
-		protocolPhaseI(pDhParams);
-		byte[] bobPublicKey = (byte[]) HttpObjectBus.postWithSource(getId(), 
-				bobURL,
-				getPublicKey(),
+		protocolPhaseI();
+		byte[] bobPublicValue = (byte[]) HttpObjectBus.postWithSource(getId(), 
+				trustedPkcs3URL,
+				getPublicValue(),
 				this.tcpTimeout,
 				this.httpTimeout,
 				true);
-		protocolPhaseII(bobPublicKey);
+		protocolPhaseII(bobPublicValue);
 	}
 	
 	/**
 	 * @param pData
 	 * @param pUseResponseFlag
 	 * @return
-	 * @throws HobesTransportException
-	 * @throws HobesSecurityException
-	 * @throws HobesDataException
+	 * @throws HobesException
 	 */
 	public Object post(Object pData, boolean pUseResponseFlag) 
-			throws HobesTransportException, HobesSecurityException, HobesDataException{
+			throws HobesException{
 		
-		try {
-			HttpURLConnection connection = (HttpURLConnection) bobURL.openConnection();
-			connection.setConnectTimeout(this.tcpTimeout);
-			connection.setReadTimeout(this.httpTimeout);
-			connection.setRequestMethod("POST");
-			connection.setDoOutput(true);
-			connection.setDoInput(pUseResponseFlag);
-			connection.connect();
-			
-			DesObjectBus.writeWithSource(getId(),
-					connection.getOutputStream(),
+			return DesObjectBusHttp.postWithSource(trustedPkcs3URL, 
+					getId(),
 					pData,
-					getSharedSecret()) ;
-			if (pUseResponseFlag) {
-				return DesObjectBus.read(connection.getInputStream(),
-						getSharedSecret());
-			}
-			else {
-				return null;
-			}
-		}
-		catch (IOException e) {
-			throw new HobesTransportException(e);
-		}
+					this.tcpTimeout,
+					this.httpTimeout,
+					pUseResponseFlag,
+					getSecretKey());
 	}
+
 }

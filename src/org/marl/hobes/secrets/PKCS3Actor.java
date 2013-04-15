@@ -19,18 +19,16 @@ package org.marl.hobes.secrets;
 
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
-import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.X509EncodedKeySpec;
 
 import javax.crypto.KeyAgreement;
 import javax.crypto.SecretKey;
 import javax.crypto.interfaces.DHPublicKey;
 import javax.crypto.spec.DHParameterSpec;
 
+import org.marl.hobes.HobesException;
 import org.marl.hobes.HobesSecurityException;
 
 
@@ -48,7 +46,7 @@ import org.marl.hobes.HobesSecurityException;
  * 
  * @author chris
  */
-public abstract class PKCS3Actor extends DesChannel {
+public class PKCS3Actor extends DesChannel {
 
 	/** The agent has just been initialized with
 	 * an identifier for the corresponding DES channel. */
@@ -68,16 +66,14 @@ public abstract class PKCS3Actor extends DesChannel {
 	protected int state = STATE_NEW;
 	
 	// the symmetric key
-	protected SecretKey sharedSecret = null;
+	protected SecretKey secretKey = null;
 	
-	// the agent generated public key
-	protected DHPublicKey publicKey = null;
+	// the agent public and private keys
+	protected DHPublicKey publicValue = null;
 	
 	// the DH key agreement protocol implementation
 	protected KeyAgreement dhProtocolAgreement = null;
 	
-	// the peer encode public key
-	protected byte[] peerEncodedPublicKey = null;
 	
 	/** 
 	 * Creates a PKCS3 agent, in conversational state <code>STATE_NEW</code>.
@@ -105,36 +101,26 @@ public abstract class PKCS3Actor extends DesChannel {
 	 * @return The symmetric key of the corresponding DES channel.
 	 * @throws HobesSecurityException When a cryptography error occurs.
 	 */
-	public SecretKey getSharedSecret() throws HobesSecurityException {
+	public SecretKey getSecretKey() throws HobesSecurityException {
 		if (getState() < STATE_PHASE_II){
 			throw new HobesSecurityException(new IllegalStateException(String.valueOf(getState())));
 		}
-		return this.sharedSecret;
-	}
-
-	/**
-	 * Answers the peer actor PKCS3 public key.
-	 * 
-	 * @return The peer byte-encoded public key, or <code>null</code> when the
-	 * actor has not yet received the key.
-	 */
-	public byte[] getPeerEncodedPublicKey() {
-		return peerEncodedPublicKey;
+		return this.secretKey;
 	}
 
 	/**
 	 * Answers this agent public key. 
 	 * 
-	 * @return The public key byte-encoded form.
+	 * @return The public key X509 byte-encoded form.
 	 * 
 	 * @throws HobesSecurityException When this agent has not completed
 	 * Diffie-Hellman protocol phase I.
 	 */
-	public byte[] getPublicKey() throws HobesSecurityException {
+	public byte[] getPublicValue() throws HobesSecurityException {
 		if (getState() < STATE_PHASE_I){
 			throw new HobesSecurityException (new IllegalStateException(String.valueOf(getState())));
 		}
-		return publicKey.getEncoded();
+		return publicValue.getEncoded();
 	}
 
 	
@@ -156,7 +142,7 @@ public abstract class PKCS3Actor extends DesChannel {
 			kpairGen.initialize(dhspec);
 			KeyPair keyPair = kpairGen.generateKeyPair();
 			
-			this.publicKey = (DHPublicKey) keyPair.getPublic();
+			this.publicValue = (DHPublicKey) keyPair.getPublic();
 			this.dhProtocolAgreement = KeyAgreement.getInstance(SecretFactory.KEY_AGREEMENT_ALGORITHM); 
 			this.dhProtocolAgreement.init(keyPair.getPrivate());
 			
@@ -174,7 +160,7 @@ public abstract class PKCS3Actor extends DesChannel {
 	}
 	
 	/**
-	 * Proceeds to the first phase of Diffie-Hellman key agreement.
+	 * Proceeds to the second phase of Diffie-Hellman key agreement.
 	 * <p>During this phase an agent independently computes the
 	 * agreed secret key resulting from Diffie-Hellman parameters
 	 * and peer public key.
@@ -182,23 +168,21 @@ public abstract class PKCS3Actor extends DesChannel {
 	 *  in state <code>STATE_PHASE_II</code>, and be able to read and write
 	 *  on the established DES channel.
 	 * 
-	 * @param peerEncodedPublicKey The peer byte-encoded public key.
+	 * @param peerEncodedPV The peer byte-encoded public key.
 	 * 
 	 * @throws HobesSecurityException When a cryptography error occurs.
 	 */
-	public void protocolPhaseII(byte[] peerEncodedPublicKey) 
-			throws HobesSecurityException{
+	public void protocolPhaseII(byte[] peerEncodedPV) 
+			throws HobesException{
 		
 		if (getState() != STATE_PHASE_I){
 			throw new HobesSecurityException(new IllegalStateException(String.valueOf(getState())));
 		}
 		
 		try{
-			this.peerEncodedPublicKey= peerEncodedPublicKey;
+			this.dhProtocolAgreement.doPhase(SecretFactory.createPublicKey(peerEncodedPV), true);
 			
-			this.dhProtocolAgreement.doPhase(createPublicKey(this.peerEncodedPublicKey), true);
-			
-			this.sharedSecret = 
+			this.secretKey = 
 					this.dhProtocolAgreement.generateSecret(SecretFactory.ENCRYPTION_ALGORITHM);
 			
 			this.state = STATE_PHASE_II;
@@ -210,30 +194,6 @@ public abstract class PKCS3Actor extends DesChannel {
 			throw new HobesSecurityException(e);
 		} 
 		catch (NoSuchAlgorithmException e) {
-			throw new HobesSecurityException(e);
-		}
-	}
-	
-	/**
-	 * Creates a public key from a byte-encoded form.
-	 * 
-	 * @param pEncodedKey The key byte-encoded form.
-	 * 
-	 * @return The created public key.
-	 * 
-	 * @throws HobesSecurityException When a cryptography error occurs.
-	 */
-	protected static DHPublicKey createPublicKey(byte[] pEncodedKey)
-			throws HobesSecurityException{
-		try{
-			KeyFactory keyFactory = KeyFactory.getInstance(SecretFactory.KEY_AGREEMENT_ALGORITHM);
-			X509EncodedKeySpec x509KeySpec = new X509EncodedKeySpec(pEncodedKey);
-			return (DHPublicKey) keyFactory.generatePublic(x509KeySpec);
-		} 
-		catch (NoSuchAlgorithmException e) {
-			throw new HobesSecurityException(e);
-		} 
-		catch (InvalidKeySpecException e) {
 			throw new HobesSecurityException(e);
 		}
 	}

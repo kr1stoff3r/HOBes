@@ -61,9 +61,9 @@ public class SecretFactoryTest {
 			pis = new PipedInputStream();
 			pos = new PipedOutputStream(pis);
 			
-			etalonSecret = SecretFactory.createSecret();
+			etalonSecret = SecretFactory.createSecretKey();
 			System.out.println("... Generated secret key: " + ObjectBus.bytestoHex(etalonSecret.getEncoded()));
-			SecretFactory.writeSecret(pos, etalonSecret);
+			SecretFactory.writeSecretKey(pos, etalonSecret);
 			echoSecret = SecretFactory.readSecret(pis);
 			System.out.println("... Echo secret key: " + ObjectBus.bytestoHex(echoSecret.getEncoded()));
 			assert(Arrays.equals(etalonSecret.getEncoded(), echoSecret.getEncoded()));
@@ -74,9 +74,9 @@ public class SecretFactoryTest {
 			//
 			// Testing DES symmetric key file API
 			//
-			etalonSecret = SecretFactory.createSecretFile(desPath);
+			etalonSecret = SecretFactory.createSecretKeyFile(desPath);
 			System.out.println("... Generated secret key: " + ObjectBus.bytestoHex(etalonSecret.getEncoded()));
-			echoSecret = SecretFactory.createSecret(desPath);
+			echoSecret = SecretFactory.createSecretKey(desPath);
 			System.out.println("... Echo secret key: " + ObjectBus.bytestoHex(echoSecret.getEncoded()));
 			assert(Arrays.equals(etalonSecret.getEncoded(), echoSecret.getEncoded()));
 			System.out.println("<-- seems ok");
@@ -89,9 +89,9 @@ public class SecretFactoryTest {
 			System.out.println("... Testing reading Diffie-Hellman parameters specification stream API");
 			pis = new PipedInputStream();
 			pos = new PipedOutputStream(pis);
-			dhspec = SecretFactory.createDhSpec();
-			SecretFactory.writeDhSpec(pos, dhspec);
-			echoDhspec = SecretFactory.readDhSpec(pis);
+			dhspec = SecretFactory.createDhParams();
+			SecretFactory.writeDhParams(pos, dhspec);
+			echoDhspec = SecretFactory.readDhParams(pis);
 			assert(dhspec.getP().equals(echoDhspec.getP())
 					&& dhspec.getG().equals(echoDhspec.getG())
 					&& dhspec.getL() == echoDhspec.getL());
@@ -103,8 +103,8 @@ public class SecretFactoryTest {
 			// Testing Diffie-Hellman parameters specification file API
 			//
 			System.out.println("... Testing Diffie-Hellman parameters specification file API");
-			dhspec = SecretFactory.createDhSpecFile(dhPath);
-			echoDhspec = SecretFactory.createDhSpec(dhPath);
+			dhspec = SecretFactory.createDhParamsFile(dhPath);
+			echoDhspec = SecretFactory.createDhParams(dhPath);
 			assert(dhspec.getP().equals(echoDhspec.getP())
 					&& dhspec.getG().equals(echoDhspec.getG())
 					&& dhspec.getL() == echoDhspec.getL());

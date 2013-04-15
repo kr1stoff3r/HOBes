@@ -57,7 +57,9 @@
 		<copy includeemptydirs="false" todir="bin">
 			<fileset dir="src">
 				<include name="**/*.des"/>
-				<include name="**/*.dhp"/>
+				<include name="**/*.dh"/>
+				<include name="**/*.PV"/>
+				<include name="**/*.x"/>
 				<include name="**/*.properties"/>
 			</fileset>
 		</copy>

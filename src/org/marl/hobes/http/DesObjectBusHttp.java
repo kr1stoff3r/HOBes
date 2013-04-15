@@ -23,7 +23,9 @@ import java.net.URL;
 
 import javax.crypto.SecretKey;
 
+import org.marl.hobes.HobesDataException;
 import org.marl.hobes.HobesException;
+import org.marl.hobes.HobesSecurityException;
 import org.marl.hobes.HobesTransportException;
 import org.marl.hobes.secrets.DesObjectBus;
 
@@ -32,7 +34,7 @@ import org.marl.hobes.secrets.DesObjectBus;
  * 
  * @author chris
  */
-public class HttpDesObjectBus {
+public class DesObjectBusHttp {
 	
 	/** 
 	 * Serializes an object as the payload of an HTTP <code>POST</code> request.
@@ -72,6 +74,44 @@ public class HttpDesObjectBus {
 			connection.connect();
 			
 			DesObjectBus.write(connection.getOutputStream(), pData, pSharedKey) ;
+			if (pUseResponseFlag) {
+				return DesObjectBus.read(connection.getInputStream(), pSharedKey);
+			}
+			else {
+				return null;
+			}
+		}
+		catch (IOException e) {
+			throw new HobesTransportException(e);
+		}
+	}
+
+
+	/**
+	 * @param pData
+	 * @param pUseResponseFlag
+	 * @return
+	 * @throws HobesTransportException
+	 * @throws HobesSecurityException
+	 * @throws HobesDataException
+	 */
+	public static Object postWithSource(URL pUrl,
+			String pSource,
+			Object pData, 
+			int pTcpTimeout,
+			int pHttpTimeout,
+			boolean pUseResponseFlag,
+			SecretKey pSharedKey) throws HobesException {
+		try {
+			HttpURLConnection connection = (HttpURLConnection) pUrl.openConnection();
+			connection.setConnectTimeout(pTcpTimeout);
+			connection.setReadTimeout(pHttpTimeout);
+			connection.setRequestMethod("POST");
+			connection.setDoOutput(true);
+			connection.setDoInput(pUseResponseFlag);
+			connection.connect();
+			
+			DesObjectBus.writeWithSource(pSource, connection.getOutputStream(), pData, pSharedKey) ;
 			if (pUseResponseFlag) {
 				return DesObjectBus.read(connection.getInputStream(), pSharedKey);
 			}

@@ -17,7 +17,7 @@ along with HOBes.  If not, see <http://www.gnu.org/licenses/>.
 */
 package org.marl.hobes.http.test;
 
-import org.marl.hobes.http.HttpDesObjectBus;
+import org.marl.hobes.http.DesObjectBusHttp;
 import org.marl.hobes.http.HttpObjectBus;
 import org.marl.hobes.secrets.SecretManager;
 import org.marl.hobes.test.TestObjectType;
@@ -38,7 +38,7 @@ public class HttpDesObjectBusTest {
 			//
 			System.out.println("... Testing raw de/serialization on DES encrypted HTTP transport, using echo endpoint: "
 					+ TestPreferences.getEchoEndpointUrl().toExternalForm());
-			TestObjectType echo = (TestObjectType) HttpDesObjectBus.post(
+			TestObjectType echo = (TestObjectType) DesObjectBusHttp.post(
 					TestPreferences.getEchoEndpointUrl(),
 					testObject,
 					HttpObjectBus.DEBUG_TCP_TIMEOUT,
@@ -50,7 +50,7 @@ public class HttpDesObjectBusTest {
 			
 			System.out.println("... Testing raw de/serialization on DES encrypted HTTP transport, using endpoint: "
 					+ TestPreferences.getTestDesUrl().toExternalForm());
-			echo = (TestObjectType) HttpDesObjectBus.post(
+			echo = (TestObjectType) DesObjectBusHttp.post(
 					TestPreferences.getTestDesUrl(),
 					testObject,
 					HttpObjectBus.DEBUG_TCP_TIMEOUT,
